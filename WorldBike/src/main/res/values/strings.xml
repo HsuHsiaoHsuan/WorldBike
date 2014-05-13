@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">NYC Bike</string>
+    <string name="loading">Loading...</string>
+    <string name="lastUpdate">Last update time:&#160;&#160;</string>
+    <string name="refresh">Refresh</string>
+    <string name="conn_fail">Connection Failure, plz try again</string>
+
+    <string-array name="city_list">
+        <item>Plz Choose one</item>
+        <item>Taipei City, Taiwan</item>
+        <item>Kaohsiung City, Taiwan</item>
+        <item>New York City, USA</item>
+    </string-array>
+</resources>
