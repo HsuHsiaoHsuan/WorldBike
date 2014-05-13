@@ -277,13 +277,25 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
     private void getData(final int position) {
         setProgressBarIndeterminateVisibility(true);
 
-        DataDownloader.post("", null, new JsonHttpResponseHandler() {
+        String selected = "";
+
+        switch(position) {
+            case CITY_TAIPEI:
+                selected = "TAIPEI";
+                break;
+            case CITY_KAOHSIUNG:
+                selected = "KAOHSIUNG";
+                break;
+            case CITY_NEW_YORK:
+                selected = DataDownloader.Data_NewYork;
+                break;
+        }
+        DataDownloader.post(selected, null, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(JSONObject response) {
                 IParser parser = null;
                 try {
                     if(D) { Log.d(TAG, "----> actionbar selected navigation index: " + getActionBar().getSelectedNavigationIndex()); }
-
                     switch (position) {
                         case CITY_TAIPEI:
                             break;
@@ -293,7 +305,6 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
                             parser = new ParserNewYork(response);
                             break;
                     }
-
 //                    lastUpdate = response.getString("executionTime");
 //
 //                    String data = response.getString("stationBeanList");
@@ -374,6 +385,10 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
             }
         });
     }
+
+    JsonHttpResponseHandler jsonHttpResponseHandler = new JsonHttpResponseHandler() {
+
+    };
 
     // TODO cache data
     private void saveDataCache(String data) {
