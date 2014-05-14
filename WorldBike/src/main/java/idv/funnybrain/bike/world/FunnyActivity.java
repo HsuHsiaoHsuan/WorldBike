@@ -275,19 +275,21 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
     }
 
     private void getData(final int position) {
-        setProgressBarIndeterminateVisibility(true);
-
+        //setProgressBarIndeterminateVisibility(true);
         String selected = "";
 
         switch(position) {
             case CITY_TAIPEI:
+                setProgressBarIndeterminateVisibility(true);
                 selected = "TAIPEI";
                 break;
             case CITY_KAOHSIUNG:
                 selected = "KAOHSIUNG";
+                setProgressBarIndeterminateVisibility(true);
                 break;
             case CITY_NEW_YORK:
                 selected = DataDownloader.Data_NewYork;
+                setProgressBarIndeterminateVisibility(true);
                 break;
         }
         DataDownloader.post(selected, null, new JsonHttpResponseHandler() {
