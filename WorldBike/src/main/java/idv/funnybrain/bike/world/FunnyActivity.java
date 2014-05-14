@@ -280,6 +280,7 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
 
         switch(position) {
             case CITY_TAIPEI:
+                selected = DataDownloader.Data_Taipei;
                 setProgressBarIndeterminateVisibility(true);
                 selected = "TAIPEI";
                 break;

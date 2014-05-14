@@ -10,6 +10,7 @@ import org.apache.http.client.params.AllClientPNames;
  */
 public class DataDownloader {
     public static final String Data_NewYork = "http://citibikenyc.com/stations/json";
+    public static final String Data_Taipei = "http://210.69.61.60:8080/you/gwjs_cityhall.json";
 
     private static AsyncHttpClient client = new AsyncHttpClient();
 
