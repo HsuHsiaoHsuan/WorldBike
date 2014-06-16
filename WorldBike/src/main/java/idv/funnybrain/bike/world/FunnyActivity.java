@@ -19,7 +19,6 @@ import android.view.View;
 import android.view.Window;
 import android.widget.*;
 import com.capricorn.RayMenu;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -32,9 +31,11 @@ import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import idv.funnybrain.bike.world.data.*;
+import idv.funnybrain.bike.world.databases.DBHelper;
+import idv.funnybrain.bike.world.databases.DBHelper_NewYork;
+import idv.funnybrain.bike.world.databases.DBHelper_Taipei;
 import idv.funnybrain.bike.world.databases.DBHelper_nyc_citibike;
 import org.apache.http.Header;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -57,7 +58,7 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
     // ---- constant variable END ----
 
     // ---- public variable START ----
-    public static HashMap<String, IStation> stations_list;
+    public static HashMap<String, BikeStation> stations_list_new;
     public static HashMap<String, Marker> stations_marker_list;
     // ---- public variable END ----
 
@@ -75,6 +76,7 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
 
     RayMenu rayMenu;
     private DBHelper_nyc_citibike dbHelperNyccitibike;
+    private DBHelper dbHelper;
     private Menu mMenu;
 
     private SpinnerAdapter spinnerAdapter;
@@ -114,7 +116,7 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
 
         mLocationClient = new LocationClient(this, this, this);
         objectMapper = new ObjectMapper();
-        stations_list = new HashMap<String, IStation>();
+        stations_list_new = new HashMap<String, BikeStation>();
         stations_marker_list = new HashMap<String, Marker>();
 
 //        if (savedInstanceState == null) {
@@ -125,9 +127,9 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
 //        } else {
 //            listFragment_left = (ListFragment)this.getSupportFragmentManager().findFragmentById(R.id.menu_frame);
 //        }
-        if(savedInstanceState != null && stations_list.size() > 0) {
-            listFragment_left = (ListFragment) this.getSupportFragmentManager().findFragmentById(R.id.menu_frame);
-        }
+//        if(savedInstanceState != null && stations_list.size() > 0) {
+//            listFragment_left = (ListFragment) this.getSupportFragmentManager().findFragmentById(R.id.menu_frame);
+//        }
         //getData();
 
         dbHelperNyccitibike = new DBHelper_nyc_citibike(this);
@@ -194,8 +196,11 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
     protected void onDestroy() {
         if(D) { Log.d(TAG, "----> onDestroy"); }
         super.onDestroy();
-        if(dbHelperNyccitibike != null) {
-            dbHelperNyccitibike.close();
+//        if(dbHelperNyccitibike != null) {
+//            dbHelperNyccitibike.close();
+//        }
+        if(dbHelper != null) {
+            dbHelper.close();
         }
     }
 
@@ -277,79 +282,37 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
     private void getData(final int position) {
         //setProgressBarIndeterminateVisibility(true);
         String selected = "";
+        DataParser parser = null;
+        DBHelper helper = null;
 
         switch(position) {
+            case 0:
+                return;
             case CITY_TAIPEI:
-                selected = DataDownloader.Data_Taipei;
+                parser = new DataParser_Taipei();
+                dbHelper = new DBHelper_Taipei(this);
                 setProgressBarIndeterminateVisibility(true);
-                selected = "TAIPEI";
                 break;
             case CITY_KAOHSIUNG:
-                selected = "KAOHSIUNG";
                 setProgressBarIndeterminateVisibility(true);
                 break;
             case CITY_NEW_YORK:
-                selected = DataDownloader.Data_NewYork;
+                parser = new DataParser_NewYork();
+                dbHelper = new DBHelper_NewYork(this);
                 setProgressBarIndeterminateVisibility(true);
                 break;
         }
-        DataDownloader.post(selected, null, new JsonHttpResponseHandler() {
+        final DataParser finalParser = parser;
+        DataDownloader.post(finalParser._getURL(), null, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(JSONObject response) {
-                IParser parser = null;
-                try {
-                    if(D) { Log.d(TAG, "----> actionbar selected navigation index: " + getActionBar().getSelectedNavigationIndex()); }
-                    switch (position) {
-                        case CITY_TAIPEI:
-                            break;
-                        case CITY_KAOHSIUNG:
-                            break;
-                        case CITY_NEW_YORK:
-                            parser = new ParserNewYork(response);
-                            break;
-                    }
-//                    lastUpdate = response.getString("executionTime");
-//
-//                    String data = response.getString("stationBeanList");
-//                    JsonFactory factory = new JsonFactory();
-//                    JsonParser parser = factory.createParser(data);
-//                    ObjectMapper mapper = new ObjectMapper();
-//                    mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-//                    mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-//
-//                    BikeNewYork[] stationList = mapper.readValue(parser, BikeNewYork[].class);
-//
-//                    stations_list.clear();
-//                    for (BikeNewYork sbl : stationList) {
-//                        stations_list.put(sbl.getId(), sbl);
-//                        if (D) {
-//                            Log.d(TAG, "----> getData: " + sbl.toString());
-//                        }
-//                    }
-//                    if (stations_list.size() > 0) {
-//                        if (D) {
-//                            Log.d(TAG, "----> getData, stations_list size: " + stations_list.size());
-//                        }
-//                        setupLeftSlidingMenu();
-//                        putDataOnMap();
-//                        setProgressBarIndeterminateVisibility(false);
-//                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                } catch (JsonParseException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                if(parser != null) {
-                    lastUpdate = parser.getLastUpdate();
-                    stations_list = parser.getStationList();
-
-                    setupLeftSlidingMenu();
-                    putDataOnMap();
-                    setProgressBarIndeterminateVisibility(false);
-                }
+                finalParser._parseData(response);
+                lastUpdate = finalParser.getLastUpdate();
+                stations_list_new = finalParser.getStationList();
+                setupLeftSlidingMenu();
+                setupRightSlidingMenu(dbHelper);
+                putDataOnMap();
+                setProgressBarIndeterminateVisibility(false);
             }
 
             // no Connection!  or 0, 500, 503
@@ -388,10 +351,6 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
             }
         });
     }
-
-    JsonHttpResponseHandler jsonHttpResponseHandler = new JsonHttpResponseHandler() {
-
-    };
 
     // TODO cache data
     private void saveDataCache(String data) {
@@ -435,20 +394,20 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
 
         mMap.clear();
         stations_marker_list.clear();
-        Iterator<String> iterator = stations_list.keySet().iterator();
+        Iterator<String> iterator = stations_list_new.keySet().iterator();
         while(iterator.hasNext()) {
             String idx = iterator.next();
-            IStation tmpStation = stations_list.get(idx);
+            BikeStation tmpStation = stations_list_new.get(idx);
             stations_marker_list.put(idx, mMap.addMarker(
-                            new MarkerOptions().position(tmpStation.getLatLng())
-                                    .title(tmpStation.getId())
-                                    .snippet(tmpStation.getStationName())
+                            new MarkerOptions().position(tmpStation._getLocation())
+                                    .title(tmpStation._getId())
+                                    .snippet(tmpStation._getName())
                                             //.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
-                                            //.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_empty))
-                                    .icon(
-                                        BitmapDescriptorFactory.fromBitmap(
-                                                writeOnDrawable(idx, tmpStation.getAvailableBikes(), tmpStation.getAvailableDocks()).getBitmap())
-                                    )
+                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_empty))
+//                                    .icon(
+//                                            BitmapDescriptorFactory.fromBitmap(
+//                                                    writeOnDrawable(idx, tmpStation._getBike(), tmpStation._getDock()).getBitmap())
+//                                    )
                                     .draggable(false)
                     )
             );
@@ -462,19 +421,26 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
         t.commit();
 
         // after setup left, now start to setup favor list.
-        setupRightSlidingMenu();
+//        setupRightSlidingMenu();
     }
 
-    private void setupRightSlidingMenu() { // setup favor list
+//    private void setupRightSlidingMenu() { // setup favor list
+//        FragmentTransaction t = this.getSupportFragmentManager().beginTransaction();
+//        listFragment_favor = StationsFavorFragment.newInstance();
+//        t.replace(R.id.menu_frame_favor, listFragment_favor);
+//        t.commit();
+//    }
+
+    private void setupRightSlidingMenu(DBHelper helper) {
         FragmentTransaction t = this.getSupportFragmentManager().beginTransaction();
-        listFragment_favor = StationsFavorFragment.newInstance();
+        listFragment_favor = StationsFavorFragment.newInstance(helper);
         t.replace(R.id.menu_frame_favor, listFragment_favor);
         t.commit();
     }
 
     protected void updateMap(String idx) {
         getSlidingMenu().showContent(true);
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(stations_list.get(idx).getLatLng(), 15.0f));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(stations_list_new.get(idx)._getLocation(), 15.0f));
         selectMarker(idx);
     }
 
@@ -482,16 +448,22 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
         if(D) { Log.d(TAG, "selectMarker, preSelectedMarker: " + preSelectedMarker); }
         nowSelectedMarker = idx;
         if(!preSelectedMarker.equals("")) { // reset previous selected Marker
-            IStation tmpStation = stations_list.get(preSelectedMarker);
+            BikeStation tmpStation = stations_list_new.get(preSelectedMarker);
             stations_marker_list.get(preSelectedMarker).setIcon(
-                    BitmapDescriptorFactory.fromBitmap(writeOnDrawable(preSelectedMarker, tmpStation.getAvailableBikes(), tmpStation.getAvailableDocks()).getBitmap()));
+                    BitmapDescriptorFactory.fromBitmap(writeOnDrawable(preSelectedMarker, tmpStation._getBike(), tmpStation._getDock()).getBitmap()));
         }
         if(!idx.equals("")) { // click on another Marker
-            if(dbHelperNyccitibike.queryIsFavor(idx)) {
+//            if(dbHelperNyccitibike.queryIsFavor(idx)) {
+//                stations_marker_list.get(idx).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.marker_bike_selected_favor));
+//            } else {
+//                stations_marker_list.get(idx).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.marker_bike_selected));
+//            }
+            if(dbHelper.queryIsFavor(idx)) {
                 stations_marker_list.get(idx).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.marker_bike_selected_favor));
             } else {
                 stations_marker_list.get(idx).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.marker_bike_selected));
             }
+
             updateExtraInfo(true, idx);
         } else { // click on nothing
             updateExtraInfo(false, idx);
@@ -503,22 +475,24 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
     protected void updateExtraInfo(boolean toShow, final String idx) {
         RelativeLayout infoLayout = (RelativeLayout) findViewById(R.id.info);
         if(toShow) {
-            IStation tmpStation = stations_list.get(idx);
-            ((TextView) findViewById(R.id.info_name)).setText(tmpStation.getStationName());
-            ((TextView) findViewById(R.id.info_address2)).setText(tmpStation.getAddress());
-            ((TextView) findViewById(R.id.info_bike)).setText(String.valueOf(tmpStation.getAvailableBikes()));
-            ((TextView) findViewById(R.id.info_dock)).setText(String.valueOf(tmpStation.getAvailableDocks()));
+            BikeStation tmpStation = stations_list_new.get(idx);
+            ((TextView) findViewById(R.id.info_name)).setText(tmpStation._getName());
+            ((TextView) findViewById(R.id.info_address2)).setText(tmpStation._getAddress());
+            ((TextView) findViewById(R.id.info_bike)).setText(String.valueOf(tmpStation._getBike()));
+            ((TextView) findViewById(R.id.info_dock)).setText(String.valueOf(tmpStation._getDock()));
             infoLayout.setVisibility(View.VISIBLE);
             rayMenu.setVisibility(View.VISIBLE);
             rayMenu.removeAllChild();
 
-            if(dbHelperNyccitibike.queryIsFavor(idx)) { // it's favor one, so we should show un-favor icon
+            //if(dbHelperNyccitibike.queryIsFavor(idx)) { // it's favor one, so we should show un-favor icon
+            if(dbHelper.queryIsFavor(idx)) {
                 ImageView iv_favor_not = new ImageView(this);
                 iv_favor_not.setImageResource(R.drawable.bt_nofavor);
                 rayMenu.addItem(iv_favor_not, new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        int result = dbHelperNyccitibike.removeFavor(idx);
+                        //int result = dbHelperNyccitibike.removeFavor(idx);
+                        int result = dbHelper.removeFavor(idx);
                         if(result >= 0) {
                             selectMarker(idx);
                             ((StationsFavorFragment)listFragment_favor).dataChanged();
@@ -534,9 +508,10 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
                     public void onClick(View v) {
                         ContentValues values = new ContentValues();
                         values.put(DBHelper_nyc_citibike.DB_COL_STATION_ID, stations_marker_list.get(idx).getTitle());
-                        if(D) { Log.d(TAG, "addFavor click: " + stations_list.get(idx).getStationName() + "," +
-                                stations_list.get(idx).getId()); }
-                        long result = dbHelperNyccitibike.insertFavor(values);
+                        if(D) { Log.d(TAG, "addFavor click: " + stations_list_new.get(idx)._getName() + "," +
+                                stations_list_new.get(idx)._getId()); }
+                        //long result = dbHelperNyccitibike.insertFavor(values);
+                        long result = dbHelper.insertFavor(values);
                         if(result > 0) {
                             selectMarker(idx);
                             ((StationsFavorFragment)listFragment_favor).dataChanged();
@@ -555,11 +530,12 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
 //        stations_marker_list.get(idx).setIcon(BitmapDescriptorFactory.fromBitmap(writeOnDrawable(idx, tmpStation.getAvailableBikes(), tmpStation.getAvailableDocks()).getBitmap()));
 //    }
 
-    private BitmapDrawable writeOnDrawable(String idx, int bikeCount, int dockCount) {
+    private BitmapDrawable writeOnDrawable(String idx, String bikeCount, String dockCount) {
         Paint paint = new Paint();
 
         Bitmap bitmap;
-        if(dbHelperNyccitibike.queryIsFavor(idx)) {
+        //if(dbHelperNyccitibike.queryIsFavor(idx)) {
+        if(dbHelper.queryIsFavor(idx)) {
             bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.marker_empty_favor).copy(Bitmap.Config.ARGB_8888, true);
             paint.setColor(Color.RED);
         } else {
@@ -580,7 +556,8 @@ public class FunnyActivity extends SlidingFragmentActivity implements GooglePlay
     }
 
     private int getSmallIcon(String idx) {
-        if(dbHelperNyccitibike.queryIsFavor(idx)) {
+        //if(dbHelperNyccitibike.queryIsFavor(idx)) {
+        if(dbHelper.queryIsFavor(idx)) {
             return R.drawable.marker_empty_favor_small;
         } else {
             return R.drawable.marker_empty_small;

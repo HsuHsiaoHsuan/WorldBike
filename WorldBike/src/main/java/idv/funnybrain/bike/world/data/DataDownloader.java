@@ -9,9 +9,6 @@ import org.apache.http.client.params.AllClientPNames;
  * Created by freeman on 2014/4/28.
  */
 public class DataDownloader {
-    public static final String Data_NewYork = "http://citibikenyc.com/stations/json";
-    public static final String Data_Taipei = "http://210.69.61.60:8080/you/gwjs_cityhall.json";
-
     private static AsyncHttpClient client = new AsyncHttpClient();
 
     public static void get(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {

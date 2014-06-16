@@ -7,7 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import idv.funnybrain.bike.world.data.IStation;
+import idv.funnybrain.bike.world.data.BikeStation;
 import idv.funnybrain.bike.world.databases.DBHelper_nyc_citibike;
 
 /**
@@ -38,22 +38,22 @@ public class StationsFavorAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         String idx = cursor.getString(cursor.getColumnIndexOrThrow(DBHelper_nyc_citibike.DB_COL_STATION_ID));
-        IStation tmpStation = FunnyActivity.stations_list.get(idx);
+        BikeStation tmpStation = FunnyActivity.stations_list_new.get(idx);
 
         TextView id = (TextView) view.findViewById(R.id._id);
         id.setText(idx);
 
         TextView name = (TextView) view.findViewById(R.id._name);
-        name.setText(tmpStation.getStationName());
+        name.setText(tmpStation._getName());
 
         TextView address2 = (TextView) view.findViewById(R.id._address2);
-        address2.setText(tmpStation.getAddress());
+        address2.setText(tmpStation._getAddress());
 
         TextView bike = (TextView) view.findViewById(R.id._bike);
-        bike.setText(String.valueOf(tmpStation.getAvailableBikes()));
+        bike.setText(tmpStation._getBike());
 
         TextView dock = (TextView) view.findViewById(R.id._dock);
-        dock.setText(String.valueOf(tmpStation.getAvailableDocks()));
+        dock.setText(tmpStation._getDock());
     }
 
     @Override
@@ -61,7 +61,6 @@ public class StationsFavorAdapter extends CursorAdapter {
         Cursor cursor = getCursor();
         cursor.moveToPosition(position);
         String idx = cursor.getString(mCursor.getColumnIndexOrThrow(DBHelper_nyc_citibike.DB_COL_STATION_ID));
-//        return super.getItemId(position);
         return Long.valueOf(idx);
     }
 }
